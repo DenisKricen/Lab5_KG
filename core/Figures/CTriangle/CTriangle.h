@@ -3,8 +3,10 @@
 
 #include "Figures/CFigure/CFigure.h"
 #include <QPointF>
+#include <string>
 
 class CTriangle : public CFigure {
+private:
     QPointF origA, origB, origC;
     QPointF currA, currB, currC;
 
@@ -14,10 +16,10 @@ public:
     virtual void draw(QPainter& painter) override;
     virtual std::string serialize() const override;
     virtual std::string getType() const override;
-    static CTriangle* deserialize(const std::string& data);
-    
-    virtual void applyTransform(const QTransform& matrix) override;
     virtual QPointF getCenter() const override;
+    virtual void applyTransform() override;
+
+    static CTriangle* deserialize(const std::string& data);
 };
 
-#endif
+#endif // CTRIANGLE_H

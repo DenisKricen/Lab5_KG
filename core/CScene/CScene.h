@@ -7,7 +7,7 @@
 #include "CCanvas/CCanvas.h"
 #include <vector>
 #include <string>
-#include "Figures/CFigure/CFigure.cpp"
+#include "Figures/CFigure/CFigure.h"
 
 class CScene : public QObject {
     Q_OBJECT

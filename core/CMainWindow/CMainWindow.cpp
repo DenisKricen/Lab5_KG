@@ -10,7 +10,6 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include "Figures/CTriangle/CTriangle.h"
-#include "CMotion/CMotion.h"
 
 using std::cout, std::endl;
 
@@ -138,54 +137,61 @@ void CMainWindow::on_btn_Start_clicked() {
     double angle = ui->spin_Angle->value();
     QPointF center = fig->getCenter();
 
-    QTransform finalMatrix = CMotion::getTransform(center, N, M, angle, 1.0);
+    fig->resetTransform();
     
-    int colWidth = 10;
+    // Reverse
+    fig->translate(-center.x(), -center.y());
+    fig->rotate(-angle);
+    fig->translate(center.x(), center.y());
+    fig->translate(N, M);
+
+    int colW = 10; 
 
     std::cout << "--- Matrix ---" << std::endl;
-    std::cout << std::fixed << std::setprecision(4); 
-    std::cout << "[" << std::setw(colWidth) << finalMatrix.m11() << "  " 
-                     << std::setw(colWidth) << finalMatrix.m12() << "  " 
-                     << std::setw(colWidth) << finalMatrix.m13() << " ]" << std::endl;
-    std::cout << "[" << std::setw(colWidth) << finalMatrix.m21() << "  " 
-                     << std::setw(colWidth) << finalMatrix.m22() << "  " 
-                     << std::setw(colWidth) << finalMatrix.m23() << " ]" << std::endl;
-    std::cout << "[" << std::setw(colWidth) << finalMatrix.m31() << "  " 
-                     << std::setw(colWidth) << finalMatrix.m32() << "  " 
-                     << std::setw(colWidth) << finalMatrix.m33() << " ]" << std::endl;
+    std::cout << std::fixed << std::setprecision(4);
+    std::cout << "[" << std::setw(colW) << fig->getMatrixElement(0,0) << "  " 
+                     << std::setw(colW) << fig->getMatrixElement(0,1) << "  " 
+                     << std::setw(colW) << fig->getMatrixElement(0,2) << " ]\n";
+    std::cout << "[" << std::setw(colW) << fig->getMatrixElement(1,0) << "  " 
+                     << std::setw(colW) << fig->getMatrixElement(1,1) << "  " 
+                     << std::setw(colW) << fig->getMatrixElement(1,2) << " ]\n";
+    std::cout << "[" << std::setw(colW) << fig->getMatrixElement(2,0) << "  " 
+                     << std::setw(colW) << fig->getMatrixElement(2,1) << "  " 
+                     << std::setw(colW) << fig->getMatrixElement(2,2) << " ]\n";
 
     std::ofstream file("transformation_matrix.txt");
     if (file.is_open()) {
         file << std::fixed << std::setprecision(4);
         file << "Matrix:\n";
-        file << std::setw(colWidth) << finalMatrix.m11() << "  " << std::setw(colWidth) << finalMatrix.m12() << "  " << std::setw(colWidth) << finalMatrix.m13() << "\n";
-        file << std::setw(colWidth) << finalMatrix.m21() << "  " << std::setw(colWidth) << finalMatrix.m22() << "  " << std::setw(colWidth) << finalMatrix.m23() << "\n";
-        file << std::setw(colWidth) << finalMatrix.m31() << "  " << std::setw(colWidth) << finalMatrix.m32() << "  " << std::setw(colWidth) << finalMatrix.m33() << "\n";
+        file << std::setw(colW) << fig->getMatrixElement(0,0) << "\t" 
+             << std::setw(colW) << fig->getMatrixElement(0,1) << "\t" 
+             << std::setw(colW) << fig->getMatrixElement(0,2) << "\n";
+        file << std::setw(colW) << fig->getMatrixElement(1,0) << "\t" 
+             << std::setw(colW) << fig->getMatrixElement(1,1) << "\t" 
+             << std::setw(colW) << fig->getMatrixElement(1,2) << "\n";
+        file << std::setw(colW) << fig->getMatrixElement(2,0) << "\t" 
+             << std::setw(colW) << fig->getMatrixElement(2,1) << "\t" 
+             << std::setw(colW) << fig->getMatrixElement(2,2) << "\n";
         file.close();
     }
 
+
+    fig->resetTransform();
+    fig->applyTransform();
+    
     progress_t = 0.0;
     isMovingForward = true;
-    animationTimer->start(20); // 20 ms per cadr (50 FPS)
-}
-
-void CMainWindow::on_btn_Stop_clicked() {
-
-    if (animationTimer->isActive()) {
-        animationTimer->stop();
-    } else if (scene->getFirstFigure()) {
-        animationTimer->start(20);
-    }
+    animationTimer->start(20); // 20 ms per frame (50 FPS)
 }
 
 void CMainWindow::on_animation_tick() {
-    double step = 0.015; 
+    double step = 0.015;
 
     if (isMovingForward) {
         progress_t += step;
         if (progress_t >= 1.0) {
             progress_t = 1.0;
-            isMovingForward = false;
+            isMovingForward = false; 
         }
     } else {
         progress_t -= step;
@@ -201,9 +207,25 @@ void CMainWindow::on_animation_tick() {
         double N = ui->spin_Move_x->value();
         double M = ui->spin_Move_y->value();
         double angle = ui->spin_Angle->value();
+        QPointF center = fig->getCenter();
 
-        QTransform matrix = CMotion::getTransform(fig->getCenter(), N, M, angle, progress_t);
-        fig->applyTransform(matrix);
-        ui->canvas->update();
+        fig->resetTransform(); 
+        
+        fig->translate(-center.x(), -center.y());
+        fig->rotate(-angle * progress_t);
+        fig->translate(center.x(), center.y());
+        fig->translate(N * progress_t, M * progress_t);
+        
+        fig->applyTransform(); 
+        ui->canvas->update(); 
+    }
+}
+
+void CMainWindow::on_btn_Stop_clicked() {
+
+    if (animationTimer->isActive()) {
+        animationTimer->stop();
+    } else if (scene->getFirstFigure()) {
+        animationTimer->start(20);
     }
 }
