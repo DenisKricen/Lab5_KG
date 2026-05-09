@@ -156,3 +156,7 @@ void CScene::loadFigures(const std::string& filename) {
     }
     file.close();
 }
+
+CFigure* CScene::getFirstFigure() const {
+    return figures.front();
+}

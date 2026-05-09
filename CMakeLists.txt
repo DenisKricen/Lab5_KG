@@ -19,6 +19,7 @@ add_executable( Lab5_KG
                 core/CMainWindow/CMainWindow.ui
                 core/Figures/CFigure/CFigure.cpp
                 core/Figures/CTriangle/CTriangle.cpp
+                core/CMotion/CMotion.cpp
 )
 
 target_include_directories(Lab5_KG PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)

@@ -26,6 +26,7 @@ public:
     double getOrdSegment();
     double getAbsSegment();
     void addFigure(CFigure* figure);
+    CFigure* getFirstFigure() const;
     void clearFigures();
     void render(QPainter& painter);
     
