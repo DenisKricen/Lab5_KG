@@ -10,6 +10,10 @@ class CTriangle : public CFigure {
     int centerY;
     int size;
 
+    float ax, ay;
+    float bx, by;
+    float cx, cy;
+
     public:
 
     CTriangle(int x,int y,int s);

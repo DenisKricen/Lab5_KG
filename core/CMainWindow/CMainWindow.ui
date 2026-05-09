@@ -132,13 +132,30 @@
          <item>
           <widget class="QSpinBox" name="spin_Center_y"/>
          </item>
+         <item>
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Radius</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="spinBox"/>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="checkbox_Right_triangle">
+           <property name="text">
+            <string>Check if right triangle</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
       <item>
        <widget class="QGroupBox" name="groupBox_3">
         <property name="title">
-         <string>Managment</string>
+         <string>Motion</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
          <item>

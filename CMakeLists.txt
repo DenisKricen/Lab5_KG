@@ -15,12 +15,10 @@ add_executable( Lab5_KG
                 core/main.cpp
                 core/CScene/CScene.cpp
                 core/CCanvas/CCanvas.cpp
-                core/Figures/CFigure/CFigure.cpp
-                core/Figures/CTriangle/CTriangle.cpp
-                core/Figures/CHexagon/CHexagon.cpp
                 core/CMainWindow/CMainWindow.cpp
                 core/CMainWindow/CMainWindow.ui
-                core/CProperties/CProperties.cpp
+                core/Figures/CFigure/CFigure.cpp
+                core/Figures/CTriangle/CTriangle.cpp
 )
 
 target_include_directories(Lab5_KG PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/core)

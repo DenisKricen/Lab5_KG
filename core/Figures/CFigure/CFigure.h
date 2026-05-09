@@ -3,7 +3,6 @@
 
 #include <QPainter>
 #include <string>
-#include "CProperties/CProperties.h"
 
 class CFigure {
 

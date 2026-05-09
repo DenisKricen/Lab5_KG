@@ -4,10 +4,10 @@
 #include <QGraphicsScene>
 #include <QPainter>
 #include <QObject>
-#include "Figures/CFigure/CFigure.h"
 #include "CCanvas/CCanvas.h"
 #include <vector>
 #include <string>
+#include "Figures/CFigure/CFigure.cpp"
 
 class CScene : public QObject {
     Q_OBJECT

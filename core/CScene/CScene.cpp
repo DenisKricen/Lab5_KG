@@ -1,56 +1,95 @@
 #include "CScene.h"
-#include "Figures/CHexagon/CHexagon.h"
-#include "Figures/CTriangle/CTriangle.h"
 #include <fstream>
 #include <sstream>
+#include "Figures/CFigure/CFigure.h"
+#include "Figures/CTriangle/CTriangle.h"
 
-void drawAxis(QPainter& painter, int x1, int y1, int x2, int y2, QColor color, int marks) {
-    painter.setPen(QPen(color, 1));
+void drawAxis(QPainter& painter, int x1, int y1, int x2, int y2, QColor color, int width) {
+    painter.setPen(QPen(color, width));
     painter.drawLine(x1, y1, x2, y2);
-
 }
 
-void CScene::drawCoorSystem(QPainter& painter, int width, int height, int marks) {
+void CScene::drawCoorSystem(QPainter& painter, int width, int height, int /*marks*/) {
+    double zoom = canvas->getZoomFactor();
+    QPointF pan = canvas->getPanOffset();
+
+    double centerX = width / 2.0 + pan.x();
+    double centerY = height / 2.0 + pan.y();
+
+    double basePixelsPerUnit = 50.0; 
     
-    drawAxis(painter, width/2, 0, width/2, height,  Qt::black, 1);
-    drawAxis(painter, 0, height/2, width, height/2, Qt::black, 1);
+    absSegment = basePixelsPerUnit * zoom;
+    ordSegment = basePixelsPerUnit * zoom; 
 
-    //Arrows for axis
-    double offset=width*0.02;
-    painter.drawLine(width/2, 0, width/2+offset, 0+offset);
-    painter.drawLine(width/2, 0, width/2-offset, 0+offset);
-    painter.setFont(QFont("Arial", width/5/marks));
-    painter.drawText(width/2-offset*2, height*0.02, "Y");
+    drawAxis(painter, centerX, 0, centerX, height, Qt::black, 2); 
+    drawAxis(painter, 0, centerY, width, centerY, Qt::black, 2); 
 
-    painter.drawLine(width, height/2, width-offset, height/2+offset);
-    painter.drawLine(width, height/2, width-offset, height/2-offset);
-    painter.drawText(width-offset, height/2*0.95, "X");
+    double targetPixelsPerMark = 80.0;
+    
+    double rawStep = targetPixelsPerMark / absSegment;
 
-    int markSize = 10;
-    ordSegment=height/2/marks*0.98;
-    absSegment=width/2/marks*0.98;
-    double numberBias=absSegment/4;
-    double ordBias=ordSegment/4;
+    double exp = std::floor(std::log10(rawStep));
+    double frac = rawStep / std::pow(10, exp);
+    double niceFrac;
+    if (frac <= 1.5) niceFrac = 1.0;
+    else if (frac <= 3.5) niceFrac = 2.0;
+    else if (frac <= 7.5) niceFrac = 5.0;
+    else niceFrac = 10.0;
+    double step = niceFrac * std::pow(10, exp);
 
-    painter.drawText(width/2+numberBias*0.9,height/2+(markSize*2)+numberBias,"0");
+    double minLogicX = (0 - centerX) / absSegment;
+    double maxLogicX = (width - centerX) / absSegment;
+    
+    double minLogicY = (centerY - height) / ordSegment; 
+    double maxLogicY = (centerY - 0) / ordSegment;
 
-    for(int i=1;i<=marks;i++) {
+    double startX = std::floor(minLogicX / step) * step;
+    double startY = std::floor(minLogicY / step) * step;
 
-        // Abscise
-        painter.setFont(QFont("Arial", width/5/marks));
-        drawAxis(painter, width/2+i*absSegment, height/2-(markSize/2), width/2+i*absSegment, height/2+(markSize/2), Qt::black, 1);
-        drawAxis(painter, width/2-i*absSegment, height/2-(markSize/2), width/2-i*absSegment, height/2+(markSize/2), Qt::black, 1);
-        painter.drawText(width/2+i*absSegment-(numberBias),height/2+(markSize*2)+numberBias,QString::number(i));
-        painter.drawText(width/2-i*absSegment-(numberBias*2),height/2+(markSize*2)+numberBias,QString::number(-i));
+    int markSize = 5;
+    painter.setFont(QFont("Arial", 9));
+    
+    int decimals = (step < 1.0) ? -std::floor(std::log10(step)) : 0;
 
-        // Ordinate
-        painter.setFont(QFont("Arial", height/5/marks));
-        drawAxis(painter, width/2-(markSize/2), height/2-i*(ordSegment), width/2+(markSize/2), height/2-i*(ordSegment), Qt::black, 1);
-        drawAxis(painter, width/2-(markSize/2), height/2+i*(ordSegment), width/2+(markSize/2), height/2+i*(ordSegment), Qt::black, 1);
-        painter.drawText(width/2+(markSize/2)+(ordBias),height/2-i*(ordSegment)+ordBias,QString::number(i));
-        painter.drawText(width/2+(markSize/2)+(ordBias),height/2+i*(ordSegment)+ordBias,QString::number(-i));
+    for (double logicX = startX; logicX <= maxLogicX; logicX += step) {
+        if (std::abs(logicX) < 1e-9) continue; 
+
+        double screenX = centerX + logicX * absSegment;
+        painter.drawLine(screenX, centerY - markSize, screenX, centerY + markSize);
+        painter.drawText(screenX - 10, centerY + markSize * 2 + 5, QString::number(logicX, 'f', decimals));
     }
 
+    for (double logicY = startY; logicY <= maxLogicY; logicY += step) {
+        if (std::abs(logicY) < 1e-9) continue; 
+
+        double screenY = centerY - logicY * ordSegment;
+        painter.drawLine(centerX - markSize, screenY, centerX + markSize, screenY);
+        painter.drawText(centerX + markSize + 5, screenY + 4, QString::number(logicY, 'f', decimals));
+    }
+
+    painter.drawText(centerX + 5, centerY + markSize * 2 + 5, "0");
+}
+
+void CScene::render(QPainter& painter) {
+    int cvWd = canvas->width();
+    int cvHt = canvas->height();
+
+    drawCoorSystem(painter, cvWd, cvHt, 10); 
+    
+    double centerX = cvWd / 2.0 + canvas->getPanOffset().x();
+    double centerY = cvHt / 2.0 + canvas->getPanOffset().y();
+
+    painter.save();
+    
+    painter.translate(centerX, centerY);
+    
+    painter.scale(absSegment, -ordSegment); 
+    
+    for(auto figure : figures) {
+        figure->draw(painter);
+    }
+    
+    painter.restore();
 }
 
 CScene::CScene(QObject* parent) : QObject(parent){
@@ -85,25 +124,6 @@ double CScene::getOrdSegment() {
     return ordSegment;
 }
 
-void CScene::render(QPainter& painter) {
-
-    int cvWd = canvas->width();       // canvas width
-    int cvHt = canvas->height();      // canvas height
-
-    drawCoorSystem(painter, cvWd, cvHt, 10);
-    
-    painter.save();
-    painter.translate(cvWd/2, cvHt/2);
-    painter.scale(absSegment, ordSegment); 
-    
-    for(auto figure : figures) {
-        figure->draw(painter);
-    }
-    
-    painter.restore();
-
-}
-
 void CScene::saveFigures(const std::string& filename) {
     std::ofstream file(filename);
     if (!file.is_open()) return;
@@ -130,9 +150,7 @@ void CScene::loadFigures(const std::string& filename) {
         std::getline(iss, data);
         if(!data.empty() && data[0] == ' ') data = data.substr(1);
         
-        if(type == "hexagon") {
-            figures.push_back(CHexagon::deserialize(data));
-        } else if(type == "triangle") {
+        if(type == "triangle") {
             figures.push_back(CTriangle::deserialize(data));
         }
     }

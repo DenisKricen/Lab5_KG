@@ -18,9 +18,6 @@ private:
     CCanvas* canvas;
     Ui::CMainWindow *ui;
 
-    QColor fillColor;
-    QColor lineColor;
-
 protected:
     void resizeEvent(QResizeEvent *event) override;
 
@@ -29,10 +26,7 @@ public:
     ~CMainWindow();
 
 private slots:
-    void onCreateClicked();
-    void onClearClicked();
-    void onChooseOutColor();
-    void onChooseInColor();
+
 };
 
 #endif // CMAINWINDOW_H
