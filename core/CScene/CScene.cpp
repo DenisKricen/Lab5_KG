@@ -10,6 +10,7 @@ void drawAxis(QPainter& painter, int x1, int y1, int x2, int y2, QColor color, i
 }
 
 void CScene::drawCoorSystem(QPainter& painter, int width, int height, int /*marks*/) {
+    // Recompute axis scale from the current zoom level.
     double zoom = canvas->getZoomFactor();
     QPointF pan = canvas->getPanOffset();
 
@@ -26,9 +27,12 @@ void CScene::drawCoorSystem(QPainter& painter, int width, int height, int /*mark
 
     double targetPixelsPerMark = 80.0;
     
+    // Pick a readable tick spacing in logical units.
     double rawStep = targetPixelsPerMark / absSegment;
 
     double exp = std::floor(std::log10(rawStep));
+    // Round the step to 1, 2, 5, or 10 times a power of ten.
+
     double frac = rawStep / std::pow(10, exp);
     double niceFrac;
     if (frac <= 1.5) niceFrac = 1.0;
@@ -71,6 +75,7 @@ void CScene::drawCoorSystem(QPainter& painter, int width, int height, int /*mark
 }
 
 void CScene::render(QPainter& painter) {
+    // Render the grid first, then draw figures in scene coordinates.
     int cvWd = canvas->width();
     int cvHt = canvas->height();
 
@@ -79,6 +84,7 @@ void CScene::render(QPainter& painter) {
     double centerX = cvWd / 2.0 + canvas->getPanOffset().x();
     double centerY = cvHt / 2.0 + canvas->getPanOffset().y();
 
+    // draw figures depending on their coordinates 
     painter.save();
     
     painter.translate(centerX, centerY);

@@ -1,13 +1,14 @@
 #include "CTriangle.h"
 #include <sstream>
 
-CTriangle::CTriangle(QPointF p1, QPointF p2, QPointF p3) 
+CTriangle::CTriangle(QPointF p1, QPointF p2, QPointF p3)
     : origA(p1), origB(p2), origC(p3), currA(p1), currB(p2), currC(p3) {
 }
 
 void CTriangle::draw(QPainter& painter) {
+    // Keep the outline thickness constant while zooming.
     QPen pen(Qt::red, 3);
-    pen.setCosmetic(true); 
+    pen.setCosmetic(true);
     painter.setPen(pen);
 
     QPolygonF triangle;
@@ -17,7 +18,7 @@ void CTriangle::draw(QPainter& painter) {
 }
 
 void CTriangle::applyTransform() {
-
+    // Apply the current affine matrix to each original vertex.
     auto mapPoint = [this](QPointF p) {
 
         double newX = p.x() * matrix[0][0] + p.y() * matrix[1][0] + matrix[2][0];
@@ -32,8 +33,8 @@ void CTriangle::applyTransform() {
 }
 
 QPointF CTriangle::getCenter() const {
-
-    return QPointF((origA.x() + origB.x() + origC.x()) / 3.0, 
+    // Estimate the center of triangle
+    return QPointF((origA.x() + origB.x() + origC.x()) / 3.0,
                    (origA.y() + origB.y() + origC.y()) / 3.0);
 }
 
@@ -42,6 +43,7 @@ std::string CTriangle::getType() const {
 }
 
 std::string CTriangle::serialize() const {
+    // Store the original vertices so the triangle can be reconstructed later.
     std::ostringstream oss;
 
     oss << origA.x() << " " << origA.y() << " " 
@@ -51,6 +53,7 @@ std::string CTriangle::serialize() const {
 }
 
 CTriangle* CTriangle::deserialize(const std::string& data) {
+    // Rebuild the triangle from the saved vertex coordinates.
     std::istringstream iss(data);
     double ax, ay, bx, by, cx, cy;
     iss >> ax >> ay >> bx >> by >> cx >> cy;

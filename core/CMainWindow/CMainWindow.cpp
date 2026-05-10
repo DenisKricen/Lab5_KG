@@ -23,6 +23,7 @@ CMainWindow::CMainWindow(QWidget *parent) : QWidget(parent), ui(new Ui::CMainWin
     scene->setWidget(canvas);
 
     animationTimer = new QTimer(this);
+    // Restart the animation from the first frame.
     progress_t = 0.0;
     isMovingForward = true;
 
@@ -56,6 +57,10 @@ void CMainWindow::on_btn_Create_clicked() {
 
     QPointF pA, pB, pC;
     double r = ui->spin_Radius->value(); 
+
+    // Check draw method
+    // If radius is > 0, then we draw via center coordinate and radius
+    // Otherwise we use coordinates of each vertex
     if (r > 0) {
         double cx = ui->spin_Center_x->value();
         double cy = ui->spin_Center_y->value();
@@ -71,22 +76,31 @@ void CMainWindow::on_btn_Create_clicked() {
         pB = QPointF(ui->spin_B_x->value(), ui->spin_B_y->value());
         pC = QPointF(ui->spin_C_x->value(), ui->spin_C_y->value());
 
+        // Reject degenerate triangles with zero area.
         double area = 0.5 * std::abs(pA.x()*(pB.y() - pC.y()) + pB.x()*(pC.y() - pA.y()) + pC.x()*(pA.y() - pB.y()));
         if (area < 1e-6) {
             QMessageBox::critical(this, "Error", "Your coordinates are forming one line or one dot.");
             return;
         }
 
+        // Check if triangle should have equal sides
         if (ui->checkbox_Right_triangle->isChecked()) {
-            auto distSq = [](QPointF p1, QPointF p2) {
-                return std::pow(p1.x()-p2.x(), 2) + std::pow(p1.y()-p2.y(), 2);
+            auto dist = [](QPointF p1, QPointF p2) {
+                return std::sqrt(std::pow(p1.x()-p2.x(), 2) + std::pow(p1.y()-p2.y(), 2));
             };
-            double dAB = distSq(pA, pB);
-            double dBC = distSq(pB, pC);
-            double dCA = distSq(pC, pA);
+            
+            // Measure all three sides to verify the shape.
+            double lenAB = dist(pA, pB);
+            double lenBC = dist(pB, pC);
+            double lenCA = dist(pC, pA);
 
-            if (std::abs(dAB - dBC) > 1e-2 || std::abs(dBC - dCA) > 1e-2) {
-                QMessageBox::warning(this, "Error", "Your coordinates does not form a right triangle.");
+            double avgLen = (lenAB + lenBC + lenCA) / 3.0;
+
+            // Allow a small numeric tolerance for manual input.
+            double tolerance = std::max(2.0, avgLen * 0.03);
+
+            if (std::abs(lenAB - lenBC) > tolerance || std::abs(lenBC - lenCA) > tolerance) {
+                QMessageBox::critical(this, "Error", "Your coordinates do not form an equilateral triangle.");
                 return;
             }
         }
@@ -135,11 +149,11 @@ void CMainWindow::on_btn_Start_clicked() {
     double N = ui->spin_Move_x->value();
     double M = ui->spin_Move_y->value();
     double angle = ui->spin_Angle->value();
+    // Build the transform around the triangle center. 
     QPointF center = fig->getCenter();
 
     fig->resetTransform();
     
-    // Reverse
     fig->translate(-center.x(), -center.y());
     fig->rotate(-angle);
     fig->translate(center.x(), center.y());
@@ -148,6 +162,7 @@ void CMainWindow::on_btn_Start_clicked() {
     int colW = 10; 
 
     std::cout << "--- Matrix ---" << std::endl;
+    // Log the composed transform for debugging and export. 
     std::cout << std::fixed << std::setprecision(4);
     std::cout << "[" << std::setw(colW) << fig->getMatrixElement(0,0) << "  " 
                      << std::setw(colW) << fig->getMatrixElement(0,1) << "  " 
@@ -179,12 +194,14 @@ void CMainWindow::on_btn_Start_clicked() {
     fig->resetTransform();
     fig->applyTransform();
     
+    // Restart the animation from the first frame.
     progress_t = 0.0;
     isMovingForward = true;
     animationTimer->start(20); // 20 ms per frame (50 FPS)
 }
 
 void CMainWindow::on_animation_tick() {
+    // Advance and then rewind the animation smoothly.
     double step = 0.015;
 
     if (isMovingForward) {

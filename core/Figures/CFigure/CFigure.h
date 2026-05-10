@@ -7,8 +7,10 @@
 
 class CFigure {
 protected:
+    // 3x3 affine transform matrix.
     double matrix[3][3];
 
+    // Left-multiply the current transform by another matrix.
     void multiplyMatrix(const double other[3][3]);
 
 public:
