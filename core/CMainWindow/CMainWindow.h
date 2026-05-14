@@ -36,7 +36,7 @@ private slots:
     void on_btn_Export_clicked();
     void on_btn_Start_clicked();
     void on_btn_Stop_clicked();
-    void on_animation_tick();
+    void updateAnimationFrame();
 };
 
 #endif // CMAINWINDOW_H

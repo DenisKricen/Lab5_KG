@@ -9,6 +9,7 @@
 #include <cmath>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QPixmap>
 #include "Figures/CTriangle/CTriangle.h"
 
 using std::cout, std::endl;
@@ -29,7 +30,7 @@ CMainWindow::CMainWindow(QWidget *parent) : QWidget(parent), ui(new Ui::CMainWin
 
     scene->loadFigures("figures.txt");
 
-    connect(animationTimer, &QTimer::timeout, this, &CMainWindow::on_animation_tick);
+    connect(animationTimer, &QTimer::timeout, this, &CMainWindow::updateAnimationFrame);
     connect(ui->btn_Create, &QPushButton::clicked, this, &CMainWindow::on_btn_Create_clicked);
     connect(ui->btn_Clear, &QPushButton::clicked, this, &CMainWindow::on_btn_Clear_clicked);
     
@@ -125,7 +126,9 @@ void CMainWindow::on_btn_Export_clicked() {
         return; 
     }
 
-    QPixmap pixmap = ui->canvas->grab();
+    QPixmap pixmap(ui->canvas->size());
+    pixmap.fill(Qt::white);
+    ui->canvas->render(&pixmap);
 
     if (pixmap.save(fileName)) {
         // QMessageBox::information(this, "Success", "Image is saved");
@@ -155,7 +158,7 @@ void CMainWindow::on_btn_Start_clicked() {
     fig->resetTransform();
     
     fig->translate(-center.x(), -center.y());
-    fig->rotate(-angle);
+    fig->rotate(angle);
     fig->translate(center.x(), center.y());
     fig->translate(N, M);
 
@@ -200,7 +203,7 @@ void CMainWindow::on_btn_Start_clicked() {
     animationTimer->start(20); // 20 ms per frame (50 FPS)
 }
 
-void CMainWindow::on_animation_tick() {
+void CMainWindow::updateAnimationFrame() {
     // Advance and then rewind the animation smoothly.
     double step = 0.015;
 
@@ -229,7 +232,7 @@ void CMainWindow::on_animation_tick() {
         fig->resetTransform(); 
         
         fig->translate(-center.x(), -center.y());
-        fig->rotate(-angle * progress_t);
+        fig->rotate(angle * progress_t);
         fig->translate(center.x(), center.y());
         fig->translate(N * progress_t, M * progress_t);
         
